@@ -1,0 +1,3 @@
+Starter project generated. Not a complete production app and not yet compiled or device-tested.
+A Gradle wrapper JAR is not included. Open in Android Studio and generate/commit the wrapper before GitHub Actions.
+Local AI runtime, production RAG index, persistent profile storage, full activities, and comprehensive UI/integration tests remain to be implemented.
