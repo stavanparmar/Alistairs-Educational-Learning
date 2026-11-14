@@ -1,6 +1,6 @@
 # Alistair’s Educational Learning
 
-An offline-first Android learning app concept for children aged **3–10**. The project is structured for Android phones and tablets and is designed to personalize learning from a local child profile.
+Offline-first Android learning for children, powered by on-device LangChain4j and RAG to create age-appropriate activities from curated local content, no cloud required.
 
 > **Project status:** This ZIP is a starter source project and implementation foundation. It is not a finished, tested APK. The first-launch profile, sample learning dashboard, local stage-generation logic, and unit-test examples are included. Full drawing tools, complete game content, production RAG ingestion/vector search, LangChain4j integration, and a compatible on-device model runtime still need implementation and device testing.
 
