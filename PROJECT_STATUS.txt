@@ -1,4 +1,5 @@
 Cross-platform Kotlin Multiplatform starter scaffold for Android and iOS.
-The Compose UI and learning logic are shared; Android has a native launcher and iOS has an Xcode project that links the shared framework.
-Not yet compiled or device-tested after cross-platform setup. iOS builds require macOS and Xcode.
-Local AI runtime, production RAG index, persistent profile storage, full activities, and comprehensive UI/integration tests remain to be implemented.
+The Compose UI and learning logic are shared; child name and age persist locally and can be edited from the learning home screen.
+The Games tile opens a playable memory-match activity with pair matching, turn counting, mismatch handling, and replay.
+Not yet device-tested. iOS builds require macOS and Xcode.
+Local AI runtime, production RAG index, progress storage, full activities, and comprehensive UI/integration tests remain to be implemented.

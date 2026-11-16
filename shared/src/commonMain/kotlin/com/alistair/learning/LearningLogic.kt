@@ -20,6 +20,74 @@ data class ChildProfile(val displayName: String, val age: Int) {
     }
 }
 
+interface ChildProfileStore {
+    fun load(): ChildProfile?
+    fun save(profile: ChildProfile): Boolean
+}
+
+data class MemoryCard(val id: Int, val symbol: String, val matched: Boolean = false)
+
+data class MemoryGameState(
+    val cards: List<MemoryCard>,
+    val firstCardId: Int? = null,
+    val secondCardId: Int? = null,
+    val turns: Int = 0
+) {
+    val isComplete: Boolean
+        get() = cards.all { it.matched }
+
+    val hasMismatch: Boolean
+        get() {
+            val first = cards.find { it.id == firstCardId } ?: return false
+            val second = cards.find { it.id == secondCardId } ?: return false
+            return first.symbol != second.symbol
+        }
+}
+
+fun newMemoryGame(symbols: List<String>): MemoryGameState {
+    require(symbols.size >= 2) { "A memory game needs at least two pairs." }
+    require(symbols.all { it.isNotBlank() } && symbols.distinct().size == symbols.size) {
+        "Each pair must have a unique, non-blank symbol."
+    }
+
+    return MemoryGameState(
+        cards = symbols.flatMapIndexed { pairIndex, symbol ->
+            listOf(
+                MemoryCard(pairIndex * 2, symbol),
+                MemoryCard(pairIndex * 2 + 1, symbol)
+            )
+        }
+    )
+}
+
+fun revealMemoryCard(state: MemoryGameState, cardId: Int): MemoryGameState {
+    val card = state.cards.find { it.id == cardId } ?: return state
+    if (card.matched || state.secondCardId != null || state.firstCardId == cardId) return state
+
+    val firstCardId = state.firstCardId
+    if (firstCardId == null) {
+        return state.copy(firstCardId = cardId)
+    }
+
+    val firstCard = state.cards.find { it.id == firstCardId } ?: return state
+    val updatedCards = if (firstCard.symbol == card.symbol) {
+        state.cards.map {
+            if (it.id == firstCardId || it.id == cardId) it.copy(matched = true) else it
+        }
+    } else {
+        state.cards
+    }
+
+    return if (firstCard.symbol == card.symbol) {
+        state.copy(cards = updatedCards, firstCardId = null, turns = state.turns + 1)
+    } else {
+        state.copy(secondCardId = cardId, turns = state.turns + 1)
+    }
+}
+
+fun hideMismatchedMemoryCards(state: MemoryGameState): MemoryGameState =
+    if (state.hasMismatch) state.copy(firstCardId = null, secondCardId = null) else state
+
 data class LearningStage(
     val id: String,
     val subject: String,

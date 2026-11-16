@@ -30,6 +30,42 @@ class LearningLogicTest {
     }
 
     @Test
+    fun memoryGameMatchesPairsAndCountsTurns() {
+        val game = newMemoryGame(listOf("cat", "dog"))
+        val firstCat = game.cards.first { it.symbol == "cat" }.id
+        val secondCat = game.cards.last { it.symbol == "cat" }.id
+
+        val firstPick = revealMemoryCard(game, firstCat)
+        val matched = revealMemoryCard(firstPick, secondCat)
+
+        assertEquals(1, matched.turns)
+        assertTrue(matched.cards.filter { it.symbol == "cat" }.all { it.matched })
+        assertTrue(!matched.isComplete)
+
+        val firstDog = matched.cards.first { it.symbol == "dog" }.id
+        val secondDog = matched.cards.last { it.symbol == "dog" }.id
+        val complete = revealMemoryCard(revealMemoryCard(matched, firstDog), secondDog)
+        assertTrue(complete.isComplete)
+    }
+
+    @Test
+    fun memoryGameHidesMismatchesAndIgnoresPicksUntilHidden() {
+        val game = newMemoryGame(listOf("cat", "dog"))
+        val cat = game.cards.first { it.symbol == "cat" }.id
+        val dog = game.cards.first { it.symbol == "dog" }.id
+
+        val mismatch = revealMemoryCard(revealMemoryCard(game, cat), dog)
+        assertTrue(mismatch.hasMismatch)
+        assertEquals(mismatch, revealMemoryCard(mismatch, game.cards.last().id))
+
+        val hidden = hideMismatchedMemoryCards(mismatch)
+        assertTrue(!hidden.hasMismatch)
+        assertEquals(null, hidden.firstCardId)
+        assertEquals(null, hidden.secondCardId)
+        assertEquals(hidden.turns, revealMemoryCard(hidden, game.cards.last().id).turns)
+    }
+
+    @Test
     fun plannerCreatesNextStageAndDeduplicatesQuestions() {
         val stage = StagePlanner().nextStage(
             subject = "Maths",
