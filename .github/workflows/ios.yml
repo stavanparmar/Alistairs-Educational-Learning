@@ -1,0 +1,33 @@
+name: iOS simulator build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build iOS simulator app
+        run: >-
+          xcodebuild
+          -project iosApp/iosApp.xcodeproj
+          -scheme iOSApp
+          -configuration Debug
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath iosApp/build
+          CODE_SIGNING_ALLOWED=NO
+          build
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: alistair-educational-learning-ios-simulator
+          path: iosApp/build/Build/Products/Debug-iphonesimulator/iOSApp.app

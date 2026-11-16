@@ -1,3 +1,4 @@
-Starter project generated. Not a complete production app and not yet compiled or device-tested.
-A Gradle wrapper JAR is not included. Open in Android Studio and generate/commit the wrapper before GitHub Actions.
+Cross-platform Kotlin Multiplatform starter scaffold for Android and iOS.
+The Compose UI and learning logic are shared; Android has a native launcher and iOS has an Xcode project that links the shared framework.
+Not yet compiled or device-tested after cross-platform setup. iOS builds require macOS and Xcode.
 Local AI runtime, production RAG index, persistent profile storage, full activities, and comprehensive UI/integration tests remain to be implemented.

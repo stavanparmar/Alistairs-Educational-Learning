@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "AlistairsEducationalLearning"
-include(":app")
+include(":app", ":shared")
