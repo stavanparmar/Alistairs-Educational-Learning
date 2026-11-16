@@ -30,6 +30,23 @@ class LearningLogicTest {
     }
 
     @Test
+    fun activityQuestionsHaveDistinctChoicesAndAValidAnswer() {
+        val questions = listOf(
+            *mathsQuestionsForAge(4).toTypedArray(),
+            *mathsQuestionsForAge(8).toTypedArray(),
+            *mathsQuestionsForAge(10).toTypedArray(),
+            *generalKnowledgeQuestions().toTypedArray(),
+            *colourQuestions().toTypedArray()
+        )
+
+        questions.forEach { question ->
+            assertTrue(question.options.size >= 3)
+            assertEquals(question.options.size, question.options.distinct().size)
+            assertTrue(question.answer in question.options)
+        }
+    }
+
+    @Test
     fun memoryGameMatchesPairsAndCountsTurns() {
         val game = newMemoryGame(listOf("cat", "dog"))
         val firstCat = game.cards.first { it.symbol == "cat" }.id

@@ -2,7 +2,7 @@
 
 Offline-first learning for children on Android and iOS. Kotlin Multiplatform shares the Compose UI and learning logic across both platforms.
 
-> **Project status:** This is a cross-platform starter scaffold, not a finished or release-tested app. It includes a playable memory-match game, shared learning logic and tests, local child profile persistence with profile editing, an Android launcher, and an Xcode iOS app target. More learning activities, progress persistence, production RAG, and a compatible on-device model runtime still need implementation and device testing.
+> **Project status:** This is a cross-platform starter app, not a finished or release-tested product. It includes interactive memory match, age-banded maths quizzes, general knowledge and colour quizzes, finger drawing, offline learning-buddy facts, shared logic and tests, and local child profile editing. Progress storage, production RAG, and on-device AI still need implementation and device testing.
 
 ## Product principles
 
@@ -11,8 +11,7 @@ Offline-first learning for children on Android and iOS. Kotlin Multiplatform sha
 - No internet permission in the Android manifest.
 - Child name and age (3–10) are stored locally.
 - Learning difficulty is selected using the child’s age and locally stored progress.
-- Games, maths, general knowledge, drawing, and colour learning are planned modules.
-- The Games tile currently opens an interactive memory-match activity.
+- Games, maths, general knowledge, drawing, colours, and the learning buddy open interactive local activities.
 - New stages are generated locally from curated learning material and validated before being shown.
 - The app must remain usable when an AI model is absent or cannot load.
 - Original visual design, illustrations, activities, and question wording should be created for this project.

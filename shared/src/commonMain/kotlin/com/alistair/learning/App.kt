@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 
 @Composable
 fun AlistairApp(profileStore: ChildProfileStore) {
@@ -45,7 +44,7 @@ fun AlistairApp(profileStore: ChildProfileStore) {
     val cream = Color(0xFFFFF9F0)
     var profile by remember(profileStore) { mutableStateOf(profileStore.load()) }
     var editingProfile by remember(profileStore) { mutableStateOf(profile == null) }
-    var showingMemoryGame by remember { mutableStateOf(false) }
+    var activeModule by remember { mutableStateOf<LearningModule?>(null) }
     var saveError by remember { mutableStateOf<String?>(null) }
 
     val saveProfile: (String, Int) -> Unit = { name, age ->
@@ -72,10 +71,12 @@ fun AlistairApp(profileStore: ChildProfileStore) {
                     },
                     berry = berry
                 )
-            } else if (showingMemoryGame) {
-                MemoryMatchGame(
+            } else if (activeModule != null) {
+                LearningActivityScreen(
+                    module = requireNotNull(activeModule),
+                    age = requireNotNull(profile).age,
                     berry = berry,
-                    onBack = { showingMemoryGame = false }
+                    onBack = { activeModule = null }
                 )
             } else {
                 LearningHome(
@@ -87,7 +88,7 @@ fun AlistairApp(profileStore: ChildProfileStore) {
                         saveError = null
                         editingProfile = true
                     },
-                    onPlayMemoryGame = { showingMemoryGame = true }
+                    onOpenModule = { activeModule = it }
                 )
             }
         }
@@ -172,15 +173,15 @@ private fun LearningHome(
     coral: Color,
     mint: Color,
     onEditProfile: () -> Unit,
-    onPlayMemoryGame: () -> Unit
+    onOpenModule: (LearningModule) -> Unit
 ) {
     val subjects = listOf(
-        "🧩 Games" to "Tap to play Memory Match",
-        "🔢 Maths" to "Numbers and problem solving",
-        "🌍 General Knowledge" to "Discover the world",
-        "🎨 Drawing" to "Create your own pictures",
-        "🌈 Colours" to "Explore colours and patterns",
-        "🧠 Learning Buddy" to "Local AI learning assistant"
+        LearningModule.GAMES to ("🧩 Games" to "Picture matching and memory"),
+        LearningModule.MATHS to ("🔢 Maths" to "Solve number challenges"),
+        LearningModule.GENERAL_KNOWLEDGE to ("🌍 General Knowledge" to "Explore fun facts"),
+        LearningModule.DRAWING to ("🎨 Drawing" to "Draw with your finger"),
+        LearningModule.COLOURS to ("🌈 Colours" to "Find the matching colours"),
+        LearningModule.BUDDY to ("🧠 Learning Buddy" to "Tap a question for an offline fun fact")
     )
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -189,92 +190,22 @@ private fun LearningHome(
         Text("Hello, ${profile.displayName}! 👋", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = berry)
         Text("Your learning adventure • Age ${profile.age}", color = MaterialTheme.colorScheme.secondary)
         TextButton(onClick = onEditProfile) { Text("Edit profile") }
-        subjects.forEachIndexed { index, item ->
+        subjects.forEachIndexed { index, (module, item) ->
             val color = listOf(berry, coral, mint)[index % 3]
             Card(
                 colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.14f)),
                 shape = RoundedCornerShape(22.dp),
-                modifier = Modifier.fillMaxWidth().then(
-                    if (index == 0) Modifier.clickable(onClick = onPlayMemoryGame) else Modifier
-                )
+                modifier = Modifier.fillMaxWidth().clickable { onOpenModule(module) }
             ) {
                 Column(Modifier.padding(18.dp)) {
                     Text(item.first, fontSize = 21.sp, fontWeight = FontWeight.Bold, color = berry)
                     Text(item.second)
                 }
             }
-
         }
         Text(
-            "Starter preview: subject cards are navigation placeholders. Full activities, local progress, RAG and on-device model integration are roadmap items.",
+            "Choose any activity to start learning and playing.",
             style = MaterialTheme.typography.bodySmall
         )
-    }
-}
-
-@Composable
-private fun MemoryMatchGame(berry: Color, onBack: () -> Unit) {
-    val symbols = listOf("🐸", "🌟", "🍎", "🐠", "🚀", "🌈")
-    var game by remember {
-        mutableStateOf(newMemoryGame(symbols).let { it.copy(cards = it.cards.shuffled()) })
-    }
-
-    LaunchedEffect(game.firstCardId, game.secondCardId, game.turns) {
-        if (game.hasMismatch) {
-            delay(900)
-            game = hideMismatchedMemoryCards(game)
-        }
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        TextButton(onClick = onBack, modifier = Modifier.align(Alignment.Start)) {
-            Text("← Back to learning")
-        }
-        Text("Memory Match", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = berry)
-        Text(
-            if (game.isComplete) "You matched every pair! Great job!" else "Find all six matching pairs.",
-            color = MaterialTheme.colorScheme.secondary
-        )
-        Text("Turns: ${game.turns}", fontWeight = FontWeight.Bold)
-
-        game.cards.chunked(3).forEach { rowCards ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                rowCards.forEach { card ->
-                    val isVisible = card.matched ||
-                        card.id == game.firstCardId ||
-                        card.id == game.secondCardId
-                    Button(
-                        onClick = { game = revealMemoryCard(game, card.id) },
-                        enabled = !card.matched && !isVisible && !game.hasMismatch,
-                        modifier = Modifier.weight(1f).height(90.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isVisible) berry.copy(alpha = 0.16f) else berry
-                        )
-                    ) {
-                        Text(
-                            if (isVisible) card.symbol else "Tap",
-                            fontSize = if (isVisible) 34.sp else 18.sp,
-                            color = if (isVisible) berry else Color.White
-                        )
-                    }
-                }
-            }
-        }
-
-        Button(
-            onClick = {
-                game = newMemoryGame(symbols).let { newGame ->
-                    newGame.copy(cards = newGame.cards.shuffled())
-                }
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = berry)
-        ) {
-            Text(if (game.isComplete) "Play again" else "Restart game")
-        }
     }
 }

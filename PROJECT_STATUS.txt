@@ -1,5 +1,5 @@
 Cross-platform Kotlin Multiplatform starter scaffold for Android and iOS.
 The Compose UI and learning logic are shared; child name and age persist locally and can be edited from the learning home screen.
-The Games tile opens a playable memory-match activity with pair matching, turn counting, mismatch handling, and replay.
+All subject tiles open activities: illustrated memory match, age-banded maths quizzes, general knowledge and colour quizzes, finger drawing, and offline learning-buddy facts.
 Not yet device-tested. iOS builds require macOS and Xcode.
-Local AI runtime, production RAG index, progress storage, full activities, and comprehensive UI/integration tests remain to be implemented.
+Local AI runtime, production RAG index, progress storage, and comprehensive UI/integration tests remain to be implemented.
