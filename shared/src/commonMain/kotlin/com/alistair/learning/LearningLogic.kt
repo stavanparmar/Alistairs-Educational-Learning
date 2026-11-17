@@ -1,5 +1,7 @@
 package com.alistair.learning
 
+import kotlin.random.Random
+
 /** Age band used to choose a starting curriculum. */
 enum class AgeBand { EARLY, FOUNDATIONS, DEVELOPING, ADVANCING }
 
@@ -13,6 +15,39 @@ fun ageBandFor(age: Int): AgeBand {
     }
 }
 
+fun memoryPairCountFor(age: Int, stage: Int): Int {
+    require(stage > 0) { "Stage numbers must be positive." }
+    val startingPairs = when (ageBandFor(age)) {
+        AgeBand.EARLY -> 3
+        AgeBand.FOUNDATIONS -> 4
+        AgeBand.DEVELOPING -> 5
+        AgeBand.ADVANCING -> 6
+    }
+    return (startingPairs + stage - 1).coerceAtMost(12)
+}
+
+fun mazeRoomCountFor(age: Int, stage: Int): Int {
+    require(stage > 0) { "Stage numbers must be positive." }
+    val startingRooms = when (ageBandFor(age)) {
+        AgeBand.EARLY -> 3
+        AgeBand.FOUNDATIONS -> 4
+        AgeBand.DEVELOPING -> 5
+        AgeBand.ADVANCING -> 6
+    }
+    return (startingRooms + (stage - 1) / 2).coerceAtMost(8)
+}
+
+fun drivingGoalFor(age: Int, stage: Int): Int {
+    require(stage > 0) { "Stage numbers must be positive." }
+    val startingCones = when (ageBandFor(age)) {
+        AgeBand.EARLY -> 3
+        AgeBand.FOUNDATIONS -> 4
+        AgeBand.DEVELOPING -> 5
+        AgeBand.ADVANCING -> 6
+    }
+    return startingCones + (stage - 1) * 2
+}
+
 data class ChildProfile(val displayName: String, val age: Int) {
     init {
         require(displayName.isNotBlank()) { "Name cannot be blank." }
@@ -23,6 +58,35 @@ data class ChildProfile(val displayName: String, val age: Int) {
 interface ChildProfileStore {
     fun load(): ChildProfile?
     fun save(profile: ChildProfile): Boolean
+}
+
+data class AudioSettings(
+    val soundEffectsEnabled: Boolean = true,
+    val backgroundMusicEnabled: Boolean = true
+)
+
+interface AudioSettingsStore {
+    fun loadAudioSettings(): AudioSettings
+    fun saveAudioSettings(settings: AudioSettings): Boolean
+}
+
+data class LearningProgress(val completedStages: Map<String, Int> = emptyMap()) {
+    fun nextStage(module: LearningModule): Int =
+        (completedStages[module.name] ?: 0) + 1
+
+    fun completeStage(module: LearningModule, stage: Int): LearningProgress {
+        require(stage > 0) { "Stage numbers must be positive." }
+        val previous = completedStages[module.name] ?: 0
+        return copy(completedStages = completedStages + (module.name to maxOf(previous, stage)))
+    }
+
+    val totalCompletedStages: Int
+        get() = completedStages.values.sum()
+}
+
+interface LearningProgressStore {
+    fun loadProgress(profile: ChildProfile): LearningProgress
+    fun saveProgress(profile: ChildProfile, progress: LearningProgress): Boolean
 }
 
 data class MemoryCard(val id: Int, val symbol: String, val matched: Boolean = false)
@@ -87,6 +151,48 @@ fun revealMemoryCard(state: MemoryGameState, cardId: Int): MemoryGameState {
 
 fun hideMismatchedMemoryCards(state: MemoryGameState): MemoryGameState =
     if (state.hasMismatch) state.copy(firstCardId = null, secondCardId = null) else state
+
+fun generateMaze(random: Random = Random.Default, roomCount: Int = 5): List<String> {
+    require(roomCount in 2..8) { "Maze room count must be between 2 and 8." }
+    val gridSize = roomCount * 2 - 1
+    val cells = Array(gridSize) { CharArray(gridSize) { '#' } }
+    val visited = Array(roomCount) { BooleanArray(roomCount) }
+    val directions = listOf(0 to -1, 1 to 0, 0 to 1, -1 to 0)
+
+    fun carve(x: Int, y: Int) {
+        visited[y][x] = true
+        cells[y * 2][x * 2] = '.'
+        directions.shuffled(random).forEach { (dx, dy) ->
+            val nextX = x + dx
+            val nextY = y + dy
+            if (nextX in 0 until roomCount && nextY in 0 until roomCount && !visited[nextY][nextX]) {
+                cells[y * 2 + dy][x * 2 + dx] = '.'
+                carve(nextX, nextY)
+            }
+        }
+    }
+
+    carve(0, 0)
+    cells[0][0] = 'S'
+    cells[gridSize - 1][gridSize - 1] = 'G'
+    return cells.map { String(it) }
+}
+
+fun generateDifferentMaze(
+    previousMaze: List<String>,
+    random: Random = Random.Default,
+    roomCount: Int = 5
+): List<String> {
+    val generated = generateMaze(random, roomCount)
+    if (generated != previousMaze) return generated
+
+    val changed = generated.map { it.toCharArray() }
+    val wall = changed.indices.firstNotNullOfOrNull { y ->
+        changed[y].indices.firstOrNull { x -> changed[y][x] == '#' }?.let { x -> x to y }
+    } ?: error("Generated maze has no wall to vary.")
+    changed[wall.second][wall.first] = '.'
+    return changed.map { String(it) }
+}
 
 data class LearningStage(
     val id: String,

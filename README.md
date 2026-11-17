@@ -2,7 +2,7 @@
 
 Offline-first learning for children on Android and iOS. Kotlin Multiplatform shares the Compose UI and learning logic across both platforms.
 
-> **Project status:** This is a cross-platform starter app, not a finished or release-tested product. It includes interactive memory match, age-banded maths quizzes, general knowledge and colour quizzes, finger drawing, offline learning-buddy facts, shared logic and tests, and local child profile editing. Progress storage, production RAG, and on-device AI still need implementation and device testing.
+> **Project status:** This is a cross-platform starter app, not a finished or release-tested product. It includes interactive memory match, age-banded maths and number puzzles, word scrambles, patterns, a steerable maze, a lane-dodging car game, 100 original illustrated coloring pages across ten themes, general knowledge and colour quizzes, finger drawing, shuffled offline learning-buddy facts, animated question illustrations, colorful profile setup, progressive stages for completed games, locally saved per-child stage progress, age-adjusted activities, and local child profile editing. Production RAG and on-device AI still need implementation and device testing.
 
 ## Product principles
 
@@ -11,7 +11,19 @@ Offline-first learning for children on Android and iOS. Kotlin Multiplatform sha
 - No internet permission in the Android manifest.
 - Child name and age (3–10) are stored locally.
 - Learning difficulty is selected using the child’s age and locally stored progress.
-- Games, maths, general knowledge, drawing, colours, and the learning buddy open interactive local activities.
+- Games, maths, word puzzles, number puzzles, patterns, mazes, car driving, coloring, general knowledge, drawing, colours, and the learning buddy open interactive local activities.
+- Completed quizzes, memory games, mazes, and driving challenges can advance to a new stage; each maze is generated with a guaranteed path.
+- Compose screens animate navigation and activity feedback. Android plays tap/correct/incorrect effects and a soft generated music loop; independent sound and music switches are saved locally. Audio playback is not yet implemented for iOS.
+- Selecting a home-screen game gives the card a brief pop/glow animation and a distinct toy-like click before the animated screen transition.
+- Completed stages are saved locally per child profile, and age changes update the age-banded question sets and game difficulty.
+- Quiz and learning-buddy prompts use animated emoji illustrations; incorrect quiz choices give feedback without revealing the correct answer.
+- Profile setup has a full-screen animated sky with blinking stars, a vector-style flying plane and birds, plus dinosaur and underwater decorations behind a readable profile card.
+- Audio controls are available from the gear icon in the top-right of the learning home screen; Android stores sound-effect and background-music choices locally.
+- The learning home features an animated adventure banner and original vector illustrations for every activity tile; game content uses drawn boards, scenes, and interactive visual feedback wherever appropriate.
+- Each game screen now opens with an original, theme-matched illustrated scene; the free-draw activity uses an edge-to-edge canvas with floating color and clear controls.
+- Memory cards, maze walls and explorer, and the driving game’s car and road cones use original vector artwork rather than emoji-only game pieces.
+- The profile name field gives a short, muted-by-settings typing tone and an animated, personalized greeting as the child enters their name.
+- Coloring Studio offers 100 original, black-outline vector pages across dinosaur, underwater, safari, garden, forest, farm, space, fantasy, arctic, and insect themes. Tap a thumbnail to open a large page, color separate regions, preserve each page's fills, and advance after finishing.
 - New stages are generated locally from curated learning material and validated before being shown.
 - The app must remain usable when an AI model is absent or cannot load.
 - Original visual design, illustrations, activities, and question wording should be created for this project.
@@ -22,7 +34,7 @@ The app asks for:
 1. Child’s first name or nickname.
 2. Age (3 through 10).
 
-The child’s name and age are saved locally on the device, so the welcome screen is skipped on later launches. Use **Edit profile** on the learning home screen to update either value. No login is requested. A parent settings area should eventually allow progress reset, model import, sound, and reduced-motion preferences.
+The child’s name, age, audio settings, and completed stages are saved locally on the device, so the welcome screen is skipped on later launches. Use **Edit profile** on the learning home screen to update either value, and open the **gear icon** to change audio settings. No login is requested. A parent settings area should eventually allow progress reset, model import, and reduced-motion preferences.
 
 ## Age-based learning bands
 

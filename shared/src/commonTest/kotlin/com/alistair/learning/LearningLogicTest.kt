@@ -3,7 +3,9 @@ package com.alistair.learning
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import kotlin.random.Random
 
 class LearningLogicTest {
     @Test
@@ -25,6 +27,38 @@ class LearningLogicTest {
     }
 
     @Test
+    fun ageAdjustsGameDifficultyAndCurriculum() {
+        assertEquals(3, memoryPairCountFor(3, 1))
+        assertEquals(6, memoryPairCountFor(10, 1))
+        assertEquals(4, memoryPairCountFor(3, 2))
+        assertEquals(3, mazeRoomCountFor(3, 1))
+        assertEquals(6, mazeRoomCountFor(10, 1))
+        assertEquals(7, mazeRoomCountFor(10, 3))
+        assertEquals(3, drivingGoalFor(3, 1))
+        assertEquals(6, drivingGoalFor(10, 1))
+        assertTrue(
+            generalKnowledgeQuestionsForAge(3).map { it.prompt } !=
+                generalKnowledgeQuestionsForAge(9).map { it.prompt }
+        )
+        assertTrue(
+            colourQuestionsForAge(3).map { it.prompt } !=
+                colourQuestionsForAge(9).map { it.prompt }
+        )
+    }
+
+    @Test
+    fun progressKeepsTheHighestCompletedStagePerGame() {
+        val progress = LearningProgress()
+            .completeStage(LearningModule.MATHS, 2)
+            .completeStage(LearningModule.MATHS, 1)
+            .completeStage(LearningModule.MAZE, 1)
+
+        assertEquals(3, progress.nextStage(LearningModule.MATHS))
+        assertEquals(2, progress.nextStage(LearningModule.MAZE))
+        assertEquals(3, progress.totalCompletedStages)
+    }
+
+    @Test
     fun profileRejectsBlankName() {
         assertFailsWith<IllegalArgumentException> { ChildProfile(" ", 5) }
     }
@@ -36,7 +70,8 @@ class LearningLogicTest {
             *mathsQuestionsForAge(8).toTypedArray(),
             *mathsQuestionsForAge(10).toTypedArray(),
             *generalKnowledgeQuestions().toTypedArray(),
-            *colourQuestions().toTypedArray()
+            *(3..10).flatMap(::generalKnowledgeQuestionsForAge).toTypedArray(),
+            *(3..10).flatMap(::colourQuestionsForAge).toTypedArray()
         )
 
         questions.forEach { question ->
@@ -44,6 +79,29 @@ class LearningLogicTest {
             assertEquals(question.options.size, question.options.distinct().size)
             assertTrue(question.answer in question.options)
         }
+    }
+
+    @Test
+    fun coloringCatalogHasOneHundredDistinctInteractivePages() {
+        assertEquals(100, coloringScenes.size)
+        assertEquals(100, coloringScenes.map { it.title }.distinct().size)
+        assertEquals((0 until 100).toList(), coloringScenes.map { it.id })
+        assertTrue(coloringScenes.all { it.regions.size >= 8 })
+    }
+
+    @Test
+    fun quizStagesRotateQuestionsAndKeepAnswersAvailable() {
+        val questions = listOf(
+            ActivityQuestion("One?", listOf("1", "2", "3"), "1"),
+            ActivityQuestion("Two?", listOf("1", "2", "3"), "2"),
+            ActivityQuestion("Three?", listOf("1", "2", "3"), "3")
+        )
+
+        val firstStage = questionsForStage(questions, 1)
+        val secondStage = questionsForStage(questions, 2)
+
+        assertNotEquals(firstStage.map { it.prompt }, secondStage.map { it.prompt })
+        assertTrue(secondStage.all { it.answer in it.options })
     }
 
     @Test
@@ -80,6 +138,35 @@ class LearningLogicTest {
         assertEquals(null, hidden.firstCardId)
         assertEquals(null, hidden.secondCardId)
         assertEquals(hidden.turns, revealMemoryCard(hidden, game.cards.last().id).turns)
+    }
+
+    @Test
+    fun generatedMazesAreDifferentAndSolvable() {
+        val first = generateMaze(Random(1))
+        val second = generateMaze(Random(2))
+
+        assertTrue(first != second)
+        assertNotEquals(first, generateDifferentMaze(first, Random(1)))
+        assertEquals(9, first.size)
+        assertTrue(first.all { it.length == 9 })
+
+        val visited = mutableSetOf<Pair<Int, Int>>()
+        val pending = mutableListOf(0 to 0)
+        var foundGoal = false
+        while (pending.isNotEmpty()) {
+            val (x, y) = pending.removeAt(0)
+            if (x !in first[0].indices || y !in first.indices ||
+                first[y][x] == '#' || !visited.add(x to y)
+            ) {
+                continue
+            }
+            if (first[y][x] == 'G') {
+                foundGoal = true
+                break
+            }
+            pending += listOf(x to y - 1, x + 1 to y, x to y + 1, x - 1 to y)
+        }
+        assertTrue(foundGoal)
     }
 
     @Test
