@@ -90,6 +90,33 @@ class LearningLogicTest {
     }
 
     @Test
+    fun coloringImagePackContainsLicensedOfflineArtwork() {
+        assertEquals(8, coloringArtworkPack.size)
+        assertEquals(coloringArtworkPack.size, coloringArtworkPack.map { it.sourceUrl }.distinct().size)
+        assertTrue(coloringArtworkPack.all { it.sourceUrl.startsWith("https://openclipart.org/detail/") })
+    }
+
+    @Test
+    fun coloringRasterModelDetectsEnclosedAreasButIgnoresThePageBackground() {
+        val width = 9
+        val height = 9
+        val pixels = IntArray(width * height) { 0xFFFFFFFF.toInt() }
+        for (coordinate in 2..6) {
+            pixels[2 * width + coordinate] = 0xFF000000.toInt()
+            pixels[6 * width + coordinate] = 0xFF000000.toInt()
+            pixels[coordinate * width + 2] = 0xFF000000.toInt()
+            pixels[coordinate * width + 6] = 0xFF000000.toInt()
+        }
+
+        val model = ColoringRasterModel.fromPixels(width, height, pixels)
+        val fillRegion = model.regionAt(4, 4)
+
+        assertTrue(fillRegion != null)
+        assertEquals(null, model.regionAt(0, 0))
+        assertEquals(3, model.regions.getValue(fillRegion!!).size)
+    }
+
+    @Test
     fun quizStagesRotateQuestionsAndKeepAnswersAvailable() {
         val questions = listOf(
             ActivityQuestion("One?", listOf("1", "2", "3"), "1"),

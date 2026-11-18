@@ -40,6 +40,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.Image
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -59,14 +60,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -74,7 +81,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.imageResource
+import org.jetbrains.compose.resources.painterResource
+import com.alistair.learning.resources.Res
+import com.alistair.learning.resources.butterfly
+import com.alistair.learning.resources.cat_kitten_tree
+import com.alistair.learning.resources.cat_line_art
+import com.alistair.learning.resources.dinosaur
+import com.alistair.learning.resources.duck
+import com.alistair.learning.resources.flower
+import com.alistair.learning.resources.octopus
+import com.alistair.learning.resources.owl
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 enum class LearningModule {
     GAMES,
@@ -368,8 +391,18 @@ private fun ActivityPage(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Canvas(Modifier.size(width = 116.dp, height = 84.dp)) {
-                    drawColoringScene(coloringPreviewFor(module), emptyMap())
+                if (module == LearningModule.COLORING) {
+                    Image(
+                        painter = painterResource(ColoringArtwork.KITTEN_TREE.drawable),
+                        contentDescription = "Coloring page preview: kitten tree",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(width = 116.dp, height = 84.dp)
+                            .background(Color.White)
+                    )
+                } else {
+                    Canvas(Modifier.size(width = 116.dp, height = 84.dp)) {
+                        drawColoringScene(coloringPreviewFor(module), emptyMap())
+                    }
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(title, fontSize = 25.sp, fontWeight = FontWeight.Bold, color = berry)
@@ -1302,9 +1335,9 @@ internal enum class ColoringTheme(
         )
     ),
     GARDEN(
-        "🌼",
+        "🐈",
         listOf(
-            "Butterfly Garden", "Flower Patch", "Ladybug Picnic", "Sunflower Corner",
+            "Two Cats in the Garden", "Flower Patch", "Ladybug Picnic", "Sunflower Corner",
             "Busy Bee Garden", "Rainbow Greenhouse", "Garden Pond", "Tulip Path",
             "Snail's Garden", "Morning Blooms"
         )
@@ -1368,7 +1401,193 @@ internal data class ColoringScene(
     val regions: List<ColoringRegion>
 )
 
-private fun coloringRegionsFor(theme: ColoringTheme): List<ColoringRegion> = when (theme) {
+internal enum class ColoringArtwork(
+    val title: String,
+    val thumbnail: String,
+    val sourceUrl: String,
+    val drawable: DrawableResource
+) {
+    KITTEN_TREE(
+        "Kitten Tree",
+        "🐈",
+        "https://openclipart.org/detail/171607/kitten-tree",
+        Res.drawable.cat_kitten_tree
+    ),
+    CAT_FACE(
+        "Cat Line Art",
+        "🐱",
+        "https://openclipart.org/detail/75883/cat-line-art",
+        Res.drawable.cat_line_art
+    ),
+    DINOSAUR(
+        "Happy Dinosaur",
+        "🦕",
+        "https://openclipart.org/detail/281169/happy-dinosaur-outline",
+        Res.drawable.dinosaur
+    ),
+    BUTTERFLY(
+        "Detailed Butterfly",
+        "🦋",
+        "https://openclipart.org/detail/352671/butterfly",
+        Res.drawable.butterfly
+    ),
+    FLOWER(
+        "Flower Head",
+        "🌼",
+        "https://openclipart.org/detail/352672/flower",
+        Res.drawable.flower
+    ),
+    DUCK(
+        "Flying Duck",
+        "🦆",
+        "https://openclipart.org/detail/285130/flying-duck-line-art",
+        Res.drawable.duck
+    ),
+    OWL(
+        "Owl Line Art",
+        "🦉",
+        "https://openclipart.org/detail/75271/owl",
+        Res.drawable.owl
+    ),
+    OCTOPUS(
+        "Coloring Book Octopus",
+        "🐙",
+        "https://openclipart.org/detail/5515/coloring-book-octopus",
+        Res.drawable.octopus
+    )
+}
+
+internal val coloringArtworkPack = ColoringArtwork.values().toList()
+
+internal data class ColoringPixelSpan(
+    val y: Int,
+    val startX: Int,
+    val endXExclusive: Int
+)
+
+internal class ColoringRasterModel private constructor(
+    val width: Int,
+    val height: Int,
+    val regions: Map<Int, List<ColoringPixelSpan>>,
+    private val componentIds: IntArray
+) {
+    fun regionAt(x: Int, y: Int): Int? {
+        if (x !in 0 until width || y !in 0 until height) return null
+        return componentIds[y * width + x].takeIf { it in regions }
+    }
+
+    companion object {
+        fun fromImage(image: ImageBitmap): ColoringRasterModel {
+            val pixels = IntArray(image.width * image.height)
+            image.readPixels(pixels)
+            return fromPixels(image.width, image.height, pixels)
+        }
+
+        fun fromPixels(width: Int, height: Int, pixels: IntArray): ColoringRasterModel {
+            require(width > 0 && height > 0) { "Coloring images must have positive dimensions." }
+            require(pixels.size == width * height) { "Pixel data must match image dimensions." }
+
+            val componentIds = IntArray(pixels.size)
+            val queue = IntArray(pixels.size)
+            val regions = mutableMapOf<Int, List<ColoringPixelSpan>>()
+            val maximumRegionSize = (pixels.size / 3).coerceAtLeast(1)
+            var nextRegionId = 0
+
+            for (start in pixels.indices) {
+                if (componentIds[start] != 0 || isColoringOutline(pixels[start])) continue
+
+                val regionId = ++nextRegionId
+                var head = 0
+                var tail = 0
+                var touchesEdge = false
+                queue[tail++] = start
+                componentIds[start] = regionId
+
+                while (head < tail) {
+                    val pixelIndex = queue[head++]
+                    val x = pixelIndex % width
+                    val y = pixelIndex / width
+                    if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+                        touchesEdge = true
+                    }
+
+                    if (x > 0) {
+                        val neighbor = pixelIndex - 1
+                        if (componentIds[neighbor] == 0 && !isColoringOutline(pixels[neighbor])) {
+                            componentIds[neighbor] = regionId
+                            queue[tail++] = neighbor
+                        }
+                    }
+                    if (x < width - 1) {
+                        val neighbor = pixelIndex + 1
+                        if (componentIds[neighbor] == 0 && !isColoringOutline(pixels[neighbor])) {
+                            componentIds[neighbor] = regionId
+                            queue[tail++] = neighbor
+                        }
+                    }
+                    if (y > 0) {
+                        val neighbor = pixelIndex - width
+                        if (componentIds[neighbor] == 0 && !isColoringOutline(pixels[neighbor])) {
+                            componentIds[neighbor] = regionId
+                            queue[tail++] = neighbor
+                        }
+                    }
+                    if (y < height - 1) {
+                        val neighbor = pixelIndex + width
+                        if (componentIds[neighbor] == 0 && !isColoringOutline(pixels[neighbor])) {
+                            componentIds[neighbor] = regionId
+                            queue[tail++] = neighbor
+                        }
+                    }
+                }
+
+                if (touchesEdge || tail < 4 || tail > maximumRegionSize) {
+                    for (index in 0 until tail) {
+                        componentIds[queue[index]] = -1
+                    }
+                    continue
+                }
+
+                queue.sort(0, tail)
+                val spans = mutableListOf<ColoringPixelSpan>()
+                var spanStart = queue[0]
+                var previous = queue[0]
+                for (index in 1 until tail) {
+                    val pixelIndex = queue[index]
+                    if (pixelIndex != previous + 1 || pixelIndex / width != previous / width) {
+                        spans += ColoringPixelSpan(
+                            y = previous / width,
+                            startX = spanStart % width,
+                            endXExclusive = previous % width + 1
+                        )
+                        spanStart = pixelIndex
+                    }
+                    previous = pixelIndex
+                }
+                spans += ColoringPixelSpan(
+                    y = previous / width,
+                    startX = spanStart % width,
+                    endXExclusive = previous % width + 1
+                )
+                regions[regionId] = spans
+            }
+
+            return ColoringRasterModel(width, height, regions, componentIds)
+        }
+    }
+}
+
+private fun isColoringOutline(argb: Int): Boolean {
+    val alpha = argb ushr 24 and 0xFF
+    if (alpha < 96) return false
+    val red = argb ushr 16 and 0xFF
+    val green = argb ushr 8 and 0xFF
+    val blue = argb and 0xFF
+    val luminance = (red * 299 + green * 587 + blue * 114) / 1000
+    return luminance < 128
+}
+
+private fun coloringRegionsFor(theme: ColoringTheme, variation: Int): List<ColoringRegion> = when (theme) {
     ColoringTheme.DINO -> listOf(
         ColoringRegion("sun", "Sun", 55f, 48f, 42f),
         ColoringRegion("cloud", "Cloud", 305f, 62f, 58f),
@@ -1400,7 +1619,22 @@ private fun coloringRegionsFor(theme: ColoringTheme): List<ColoringRegion> = whe
         ColoringRegion("head", "Giraffe head", 244f, 117f, 28f),
         ColoringRegion("spots", "Giraffe spots", 193f, 203f, 42f)
     )
-    ColoringTheme.GARDEN -> listOf(
+    ColoringTheme.GARDEN -> if (variation == 0) listOf(
+        ColoringRegion("sun", "Sun", 52f, 48f, 25f),
+        ColoringRegion("cloud", "Cloud", 342f, 53f, 39f),
+        ColoringRegion("leftCatBody", "Left cat", 141f, 211f, 47f),
+        ColoringRegion("leftCatHead", "Left cat's head", 141f, 128f, 34f),
+        ColoringRegion("leftCatBelly", "Left cat's belly", 141f, 210f, 24f),
+        ColoringRegion("leftCatTail", "Left cat's tail", 94f, 228f, 23f),
+        ColoringRegion("rightCatBody", "Right cat", 271f, 216f, 45f),
+        ColoringRegion("rightCatHead", "Right cat's head", 270f, 126f, 34f),
+        ColoringRegion("rightCatBelly", "Right cat's belly", 271f, 212f, 24f),
+        ColoringRegion("rightCatTail", "Right cat's tail", 332f, 222f, 22f),
+        ColoringRegion("flowerLeft", "Left flowers", 47f, 243f, 24f),
+        ColoringRegion("flowerRight", "Right flowers", 356f, 242f, 24f),
+        ColoringRegion("leaves", "Garden leaves", 200f, 271f, 42f),
+        ColoringRegion("fence", "Garden fence", 198f, 78f, 30f)
+    ) else listOf(
         ColoringRegion("sun", "Sun", 55f, 48f, 35f),
         ColoringRegion("cloud", "Cloud", 310f, 55f, 55f),
         ColoringRegion("flower", "Big flower", 190f, 159f, 48f),
@@ -1487,7 +1721,7 @@ internal val coloringScenes = ColoringTheme.values().flatMapIndexed { themeIndex
             thumbnail = theme.thumbnail,
             theme = theme,
             variation = variation,
-            regions = coloringRegionsFor(theme)
+            regions = coloringRegionsFor(theme, variation)
         )
     }
 }
@@ -1510,20 +1744,31 @@ private fun ColoringActivity(
     var selectedSaturation by remember { mutableStateOf(0.7f) }
     var selectedBrightness by remember { mutableStateOf(0.9f) }
     val selectedColor = Color.hsv(selectedHue, selectedSaturation, selectedBrightness)
-    var selectedScene by remember { mutableStateOf(coloringScenes.first()) }
-    var sceneFills by remember { mutableStateOf<Map<Int, Map<String, Color>>>(emptyMap()) }
-    val fills = sceneFills[selectedScene.id].orEmpty()
-    val completedRegions = selectedScene.regions.count { it.id in fills }
-    val sceneComplete = completedRegions == selectedScene.regions.size
+    var selectedArtwork by remember { mutableStateOf(coloringArtworkPack.first()) }
+    var artworkFills by remember { mutableStateOf<Map<ColoringArtwork, Map<Int, Color>>>(emptyMap()) }
+    val bitmap = imageResource(selectedArtwork.drawable)
+    var rasterModel by remember(selectedArtwork) { mutableStateOf<ColoringRasterModel?>(null) }
+    val fills = artworkFills[selectedArtwork].orEmpty()
+
+    LaunchedEffect(selectedArtwork, bitmap) {
+        rasterModel = withContext(Dispatchers.Default) {
+            ColoringRasterModel.fromImage(bitmap)
+        }
+    }
+
+    val completedRegions = rasterModel?.let { model ->
+        fills.keys.count { it in model.regions }
+    } ?: 0
+    val totalRegions = rasterModel?.regions?.size ?: 0
 
     ActivityPage("Coloring Studio", berry, onBack, onSoundEffect) {
-        Text("Choose from 100 original coloring pages. Your colors stay when you switch pictures.")
+        Text("Choose a real line-art picture from the offline pack. Your colors stay when you switch pictures.")
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(coloringScenes, key = { it.id }) { scene ->
-                val isSelected = scene == selectedScene
+            items(coloringArtworkPack, key = { it.name }) { artwork ->
+                val isSelected = artwork == selectedArtwork
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = if (isSelected) berry.copy(alpha = 0.2f) else Color.White
@@ -1538,7 +1783,7 @@ private fun ColoringActivity(
                         )
                         .clickable {
                             onSoundEffect(SoundEffect.TAP)
-                            selectedScene = scene
+                            selectedArtwork = artwork
                         }
                 ) {
                     Row(
@@ -1546,11 +1791,15 @@ private fun ColoringActivity(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Canvas(Modifier.size(width = 52.dp, height = 52.dp)) {
-                            drawColoringScene(scene, emptyMap())
-                        }
+                        Image(
+                            painter = painterResource(artwork.drawable),
+                            contentDescription = artwork.title,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.size(width = 52.dp, height = 52.dp)
+                                .background(Color.White)
+                        )
                         Text(
-                            scene.title,
+                            artwork.title,
                             modifier = Modifier.weight(1f),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
@@ -1562,8 +1811,9 @@ private fun ColoringActivity(
             }
         }
         Text(
-            "${selectedScene.thumbnail} Picture ${selectedScene.id + 1} of ${coloringScenes.size}: " +
-                "${selectedScene.title} • $completedRegions/${selectedScene.regions.size} colored",
+            "${selectedArtwork.thumbnail} Picture ${selectedArtwork.ordinal + 1} of " +
+                "${coloringArtworkPack.size}: ${selectedArtwork.title} • " +
+                "$completedRegions areas colored",
             fontWeight = FontWeight.Bold,
             color = berry
         )
@@ -1573,34 +1823,39 @@ private fun ColoringActivity(
                 .height(280.dp)
                 .background(Color(0xFFFFFEF7), RoundedCornerShape(20.dp))
                 .border(1.dp, berry.copy(alpha = 0.28f), RoundedCornerShape(20.dp))
-                .pointerInput(selectedScene, selectedColor) {
+                .pointerInput(selectedArtwork, selectedColor, rasterModel) {
                     detectTapGestures { tap ->
-                        val x = tap.x / size.width * 400f
-                        val y = tap.y / size.height * 300f
-                        val region = selectedScene.regions
-                            .map { candidate ->
-                                val dx = x - candidate.centerX
-                                val dy = y - candidate.centerY
-                                candidate to (dx * dx + dy * dy)
-                            }
-                            .filter { (candidate, distance) ->
-                                distance <= candidate.hitRadius * candidate.hitRadius
-                            }
-                            .minByOrNull { it.second }
-                            ?.first
-                        if (region != null) {
+                        val model = rasterModel ?: return@detectTapGestures
+                        val bounds = fittedArtworkBounds(
+                            size.width.toFloat(),
+                            size.height.toFloat(),
+                            model.width,
+                            model.height
+                        )
+                        val tapOffset = Offset(tap.x, tap.y)
+                        if (!bounds.contains(tapOffset)) return@detectTapGestures
+
+                        val imageX = ((tap.x - bounds.left) / bounds.width * model.width)
+                            .toInt().coerceIn(0, model.width - 1)
+                        val imageY = ((tap.y - bounds.top) / bounds.height * model.height)
+                            .toInt().coerceIn(0, model.height - 1)
+                        val regionId = model.regionAt(imageX, imageY)
+                        if (regionId != null) {
                             onSoundEffect(SoundEffect.TAP)
-                            val updatedSceneFills = fills + (region.id to selectedColor)
-                            sceneFills = sceneFills + (selectedScene.id to updatedSceneFills)
+                            val updatedArtworkFills = fills + (regionId to selectedColor)
+                            artworkFills = artworkFills + (selectedArtwork to updatedArtworkFills)
                         }
                     }
                 }
         ) {
-            drawColoringScene(selectedScene, fills)
+            drawColoringArtwork(bitmap, rasterModel, fills)
         }
         Text(
-            if (sceneComplete) "Beautiful work! You finished this picture. 🎉"
-            else "Tap an outlined part to fill it with your selected color."
+            when {
+                rasterModel == null -> "Preparing fillable areas…"
+                totalRegions == 0 -> "No enclosed fill areas were found in this picture."
+                else -> "Tap an enclosed area to fill it with your selected color."
+            }
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1661,23 +1916,71 @@ private fun ColoringActivity(
             Button(
                 onClick = {
                     onSoundEffect(SoundEffect.TAP)
-                    sceneFills = sceneFills + (selectedScene.id to emptyMap())
+                    artworkFills = artworkFills + (selectedArtwork to emptyMap())
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = berry.copy(alpha = 0.75f))
             ) {
                 Text("Clear picture")
             }
-            if (sceneComplete) {
-                Button(
-                    onClick = {
-                        onSoundEffect(SoundEffect.TAP)
-                        val nextIndex = (selectedScene.id + 1) % coloringScenes.size
-                        selectedScene = coloringScenes[nextIndex]
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = berry)
-                ) {
-                    Text("Next picture")
-                }
+            Button(
+                onClick = {
+                    onSoundEffect(SoundEffect.TAP)
+                    val nextIndex = (selectedArtwork.ordinal + 1) % coloringArtworkPack.size
+                    selectedArtwork = coloringArtworkPack[nextIndex]
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = berry)
+            ) {
+                Text("Next picture")
+            }
+        }
+    }
+}
+
+private fun fittedArtworkBounds(
+    containerWidth: Float,
+    containerHeight: Float,
+    imageWidth: Int,
+    imageHeight: Int
+): Rect {
+    if (containerWidth <= 0f || containerHeight <= 0f || imageWidth <= 0 || imageHeight <= 0) {
+        return Rect(0f, 0f, 0f, 0f)
+    }
+    val scale = min(containerWidth / imageWidth, containerHeight / imageHeight)
+    val width = imageWidth * scale
+    val height = imageHeight * scale
+    val left = (containerWidth - width) / 2f
+    val top = (containerHeight - height) / 2f
+    return Rect(left, top, left + width, top + height)
+}
+
+private fun DrawScope.drawColoringArtwork(
+    bitmap: ImageBitmap,
+    model: ColoringRasterModel?,
+    fills: Map<Int, Color>
+) {
+    drawRect(Color.White)
+    val bounds = fittedArtworkBounds(size.width, size.height, bitmap.width, bitmap.height)
+    drawImage(
+        image = bitmap,
+        dstOffset = IntOffset(bounds.left.roundToInt(), bounds.top.roundToInt()),
+        dstSize = IntSize(bounds.width.roundToInt(), bounds.height.roundToInt())
+    )
+    if (model != null) {
+        val scaleX = bounds.width / bitmap.width
+        val scaleY = bounds.height / bitmap.height
+        fills.forEach { (regionId, color) ->
+            model.regions[regionId]?.forEach { span ->
+                drawRect(
+                    color = color,
+                    topLeft = Offset(
+                        bounds.left + span.startX * scaleX,
+                        bounds.top + span.y * scaleY
+                    ),
+                    size = Size(
+                        (span.endXExclusive - span.startX) * scaleX,
+                        scaleY
+                    )
+                )
             }
         }
     }

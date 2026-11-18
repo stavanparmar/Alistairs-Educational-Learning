@@ -2,7 +2,7 @@
 
 Offline-first learning for children on Android and iOS. Kotlin Multiplatform shares the Compose UI and learning logic across both platforms.
 
-> **Project status:** This is a cross-platform starter app, not a finished or release-tested product. It includes interactive memory match, age-banded maths and number puzzles, word scrambles, patterns, a steerable maze, a lane-dodging car game, 100 original illustrated coloring pages across ten themes, general knowledge and colour quizzes, finger drawing, shuffled offline learning-buddy facts, animated question illustrations, colorful profile setup, progressive stages for completed games, locally saved per-child stage progress, age-adjusted activities, and local child profile editing. Production RAG and on-device AI still need implementation and device testing.
+> **Project status:** This is a cross-platform starter app, not a finished or release-tested product. It includes interactive memory match, age-banded maths and number puzzles, word scrambles, patterns, a steerable maze, a lane-dodging car game, an offline pack of real line-art coloring pages, general knowledge and colour quizzes, finger drawing, shuffled offline learning-buddy facts, animated question illustrations, colorful profile setup, progressive stages for completed games, locally saved per-child stage progress, age-adjusted activities, and local child profile editing. Production RAG and on-device AI still need implementation and device testing.
 
 ## Product principles
 
@@ -23,7 +23,7 @@ Offline-first learning for children on Android and iOS. Kotlin Multiplatform sha
 - Each game screen now opens with an original, theme-matched illustrated scene; the free-draw activity uses an edge-to-edge canvas with floating color and clear controls.
 - Memory cards, maze walls and explorer, and the driving game’s car and road cones use original vector artwork rather than emoji-only game pieces.
 - The profile name field gives a short, muted-by-settings typing tone and an animated, personalized greeting as the child enters their name.
-- Coloring Studio offers 100 themed choices across dinosaur, underwater, safari, garden, forest, farm, space, fantasy, arctic, and insect themes. Use the hue, saturation, and brightness controls to choose colors, tap outlined regions to fill them, preserve each page's fills, and advance after finishing.
+- Coloring Studio bundles eight public-domain line-art images for offline coloring. Use the hue, saturation, and brightness controls to choose colors, tap enclosed image regions to fill them, preserve each page's fills, and move between pictures.
 - New stages are generated locally from curated learning material and validated before being shown.
 - The app must remain usable when an AI model is absent or cannot load.
 - Original visual design, illustrations, activities, and question wording should be created for this project.
@@ -140,6 +140,19 @@ The manifest intentionally declares no `INTERNET` permission. No login, telemetr
 
 Before release, inspect the merged manifest and all transitive dependencies to ensure no library introduces unexpected permissions or network behavior.
 
+## Coloring image pack
+
+The bundled PNG pages are public-domain downloads from [Openclipart](https://openclipart.org/share). They are packaged with the app, so the coloring activity does not need a network connection:
+
+- [Kitten Tree](https://openclipart.org/detail/171607/kitten-tree) by Fractalbee
+- [Cat Line Art](https://openclipart.org/detail/75883/cat-line-art) by gammillian
+- [Happy Dinosaur (outline)](https://openclipart.org/detail/281169/happy-dinosaur-outline) by Firkin
+- [Simple Detailed Butterfly Lineart](https://openclipart.org/detail/352671/butterfly) by teck5
+- [Simple Flower Head Lineart](https://openclipart.org/detail/352672/flower) by teck5
+- [Flying Duck Line Art](https://openclipart.org/detail/285130/flying-duck-line-art) by GDJ
+- [Owl Line Art](https://openclipart.org/detail/75271/owl) by gammillian
+- [Coloring Book Octopus](https://openclipart.org/detail/5515/coloring-book-octopus) by FunDraw_dot_com
+
 ## Suggested project roadmap
 
 1. Complete profile editing, persistence, parent controls, and local progress.
@@ -153,4 +166,4 @@ Before release, inspect the merged manifest and all transitive dependencies to e
 
 ## License
 
-No third-party learning content or model weights are bundled. Add a project license and verify licenses for every library, illustration, font, dataset, and model before distribution.
+The coloring pack is public domain as noted above; no model weights are bundled. Add a project license and verify licenses for every library, illustration, font, dataset, and model before distribution.
