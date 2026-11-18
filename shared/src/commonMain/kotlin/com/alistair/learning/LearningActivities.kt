@@ -1375,6 +1375,7 @@ private fun coloringRegionsFor(theme: ColoringTheme): List<ColoringRegion> = whe
         ColoringRegion("head", "Dinosaur head", 251f, 158f, 39f),
         ColoringRegion("tail", "Dinosaur tail", 119f, 220f, 38f),
         ColoringRegion("spikes", "Dinosaur spikes", 195f, 153f, 47f),
+        ColoringRegion("belly", "Dinosaur belly", 192f, 216f, 27f),
         ColoringRegion("flowers", "Flowers", 61f, 255f, 38f)
     )
     ColoringTheme.UNDERWATER -> listOf(
@@ -1414,6 +1415,7 @@ private fun coloringRegionsFor(theme: ColoringTheme): List<ColoringRegion> = whe
         ColoringRegion("owl", "Owl", 225f, 139f, 42f),
         ColoringRegion("mushrooms", "Mushrooms", 121f, 259f, 40f),
         ColoringRegion("squirrel", "Squirrel", 321f, 203f, 46f),
+        ColoringRegion("owlBelly", "Owl's belly", 223f, 159f, 18f),
         ColoringRegion("leaves", "Leaves", 300f, 74f, 42f),
         ColoringRegion("stream", "Forest stream", 218f, 268f, 42f)
     )
@@ -1422,6 +1424,7 @@ private fun coloringRegionsFor(theme: ColoringTheme): List<ColoringRegion> = whe
         ColoringRegion("cloud", "Cloud", 315f, 55f, 50f),
         ColoringRegion("barn", "Barn", 105f, 185f, 62f),
         ColoringRegion("roof", "Barn roof", 106f, 112f, 53f),
+        ColoringRegion("windows", "Barn windows", 105f, 151f, 28f),
         ColoringRegion("door", "Barn door", 106f, 221f, 34f),
         ColoringRegion("cow", "Cow", 263f, 207f, 55f),
         ColoringRegion("fence", "Fence", 340f, 258f, 45f),
@@ -1441,6 +1444,7 @@ private fun coloringRegionsFor(theme: ColoringTheme): List<ColoringRegion> = whe
         ColoringRegion("cloud", "Cloud", 62f, 54f, 42f),
         ColoringRegion("castle", "Castle", 201f, 177f, 63f),
         ColoringRegion("towers", "Castle towers", 201f, 104f, 58f),
+        ColoringRegion("windows", "Castle windows", 201f, 143f, 65f),
         ColoringRegion("dragon", "Dragon", 319f, 213f, 48f),
         ColoringRegion("wings", "Dragon wings", 311f, 168f, 45f),
         ColoringRegion("stars", "Magic stars", 67f, 161f, 38f),
@@ -2143,7 +2147,7 @@ private fun DrawScope.drawColoringScene(
                         close()
                     }
                     outlined(roof, color("towers"))
-                    drawRect(Color.White, Offset(x + 13f, 134f), androidx.compose.ui.geometry.Size(12f, 18f))
+                    drawRect(color("windows"), Offset(x + 13f, 134f), androidx.compose.ui.geometry.Size(12f, 18f))
                     drawRect(outline, Offset(x + 13f, 134f), androidx.compose.ui.geometry.Size(12f, 18f), style = Stroke(2f))
                 }
                 val gate = Path().apply {
@@ -2295,8 +2299,139 @@ private fun DrawScope.drawColoringScene(
                 drawCircle(outline, 2f, Offset(367f, 253f))
             }
         }
+        drawSceneDetails(scene, outline, ::color)
         drawSceneVariation(scene, outline)
         drawLine(outline, Offset(0f, 286f), Offset(400f, 286f), 3f)
+    }
+}
+
+private fun DrawScope.drawSceneDetails(
+    scene: ColoringScene,
+    outline: Color,
+    color: (String) -> Color
+) {
+    when (scene.theme) {
+        ColoringTheme.DINO -> {
+            drawOval(color("body"), Offset(160f, 198f), androidx.compose.ui.geometry.Size(64f, 39f))
+            drawOval(outline, Offset(160f, 198f), androidx.compose.ui.geometry.Size(64f, 39f), style = Stroke(2f))
+            drawLine(outline, Offset(240f, 177f), Offset(266f, 177f), 2f, StrokeCap.Round)
+            drawLine(outline, Offset(166f, 254f), Offset(164f, 266f), 2f, StrokeCap.Round)
+            drawLine(outline, Offset(178f, 254f), Offset(177f, 266f), 2f, StrokeCap.Round)
+            val belly = androidx.compose.ui.geometry.Rect(160f, 198f, 224f, 237f)
+            drawOval(color("belly"), belly.topLeft, belly.size)
+            drawOval(outline, belly.topLeft, belly.size, style = Stroke(2f))
+            repeat(3 + scene.variation % 4) { index ->
+                val x = 151f + ((scene.variation * 11 + index * 17) % 76)
+                val y = 197f + ((scene.variation * 7 + index * 9) % 31)
+                if (y < 197f || x < 158f || x > 226f) {
+                    drawCircle(outline, 2.2f, Offset(x, y))
+                }
+            }
+        }
+        ColoringTheme.UNDERWATER -> {
+            repeat(3 + scene.variation % 3) { index ->
+                val x = 169f + index * 15f
+                drawLine(outline, Offset(x, 120f), Offset(x + 4f, 169f), 1.8f, StrokeCap.Round)
+            }
+            repeat(4) { index ->
+                drawCircle(outline, 2f, Offset(300f + index % 2 * 15f, 195f + index / 2 * 10f))
+            }
+            drawLine(outline, Offset(212f, 220f), Offset(225f, 224f), 1.8f, StrokeCap.Round)
+        }
+        ColoringTheme.SAFARI -> {
+            drawLine(outline, Offset(214f, 141f), Offset(233f, 141f), 2f, StrokeCap.Round)
+            drawLine(outline, Offset(215f, 149f), Offset(233f, 149f), 2f, StrokeCap.Round)
+            drawLine(outline, Offset(214f, 157f), Offset(233f, 157f), 2f, StrokeCap.Round)
+            drawLine(outline, Offset(243f, 122f), Offset(260f, 122f), 2f, StrokeCap.Round)
+            drawLine(outline, Offset(194f, 208f), Offset(194f, 217f), 2f)
+            drawLine(outline, Offset(216f, 208f), Offset(216f, 217f), 2f)
+        }
+        ColoringTheme.GARDEN -> {
+            repeat(4) { index ->
+                val angle = index * 9f
+                drawLine(
+                    outline,
+                    Offset(190f, 146f + angle),
+                    Offset(190f, 151f + angle),
+                    1.5f,
+                    StrokeCap.Round
+                )
+            }
+            drawLine(outline, Offset(291f, 142f), Offset(297f, 149f), 1.5f)
+            drawLine(outline, Offset(313f, 142f), Offset(307f, 149f), 1.5f)
+            drawLine(outline, Offset(83f, 271f), Offset(110f, 271f), 1.5f, StrokeCap.Round)
+        }
+        ColoringTheme.FOREST -> {
+            drawOval(color("owlBelly"), Offset(205f, 151f), androidx.compose.ui.geometry.Size(36f, 17f))
+            drawOval(outline, Offset(205f, 151f), androidx.compose.ui.geometry.Size(36f, 17f), style = Stroke(1.8f))
+            repeat(3) { index ->
+                drawLine(outline, Offset(210f + index * 12f, 155f), Offset(210f + index * 12f, 164f), 1.5f)
+            }
+            drawLine(outline, Offset(314f, 222f), Offset(326f, 226f), 1.5f, StrokeCap.Round)
+            drawLine(outline, Offset(300f, 279f), Offset(316f, 279f), 1.5f)
+        }
+        ColoringTheme.FARM -> {
+            repeat(3) { index ->
+                val y = 151f + index * 24f
+                drawLine(outline, Offset(63f, y), Offset(148f, y), 1.5f)
+            }
+            repeat(2) { index ->
+                val x = 77f + index * 42f
+                drawRect(color("windows"), Offset(x, 143f), androidx.compose.ui.geometry.Size(16f, 17f))
+                drawRect(outline, Offset(x, 143f), androidx.compose.ui.geometry.Size(16f, 17f), style = Stroke(1.8f))
+                drawLine(outline, Offset(x + 8f, 143f), Offset(x + 8f, 160f), 1.2f)
+                drawLine(outline, Offset(x, 151f), Offset(x + 16f, 151f), 1.2f)
+            }
+            drawOval(outline, Offset(271f, 218f), androidx.compose.ui.geometry.Size(25f, 14f), style = Stroke(1.5f))
+            drawLine(outline, Offset(294f, 235f), Offset(294f, 250f), 2f)
+            drawLine(outline, Offset(309f, 235f), Offset(309f, 250f), 2f)
+        }
+        ColoringTheme.SPACE -> {
+            repeat(3) { index ->
+                drawLine(outline, Offset(187f, 111f + index * 8f), Offset(209f, 111f + index * 8f), 1.5f)
+            }
+            drawLine(outline, Offset(296f, 231f), Offset(286f, 246f), 2f, StrokeCap.Round)
+            drawLine(outline, Offset(322f, 231f), Offset(332f, 246f), 2f, StrokeCap.Round)
+            repeat(2 + scene.variation % 3) { index ->
+                drawCircle(outline, 1.8f, Offset(185f + index * 10f, 181f))
+            }
+        }
+        ColoringTheme.FANTASY -> {
+            repeat(3) { index ->
+                val x = 162f + index * 29f
+                drawRect(outline, Offset(x, 161f), androidx.compose.ui.geometry.Size(11f, 17f), style = Stroke(1.8f))
+            }
+            repeat(3) { index ->
+                val x = 302f + index * 12f
+                drawLine(outline, Offset(x, 189f), Offset(x + 5f, 194f), 1.8f)
+            }
+            drawLine(outline, Offset(326f, 187f), Offset(336f, 187f), 1.5f, StrokeCap.Round)
+        }
+        ColoringTheme.ARCTIC -> {
+            repeat(3) { row ->
+                repeat(2) { column ->
+                    val x = 60f + column * 51f + row % 2 * 18f
+                    val y = 194f + row * 22f
+                    drawLine(outline, Offset(x, y), Offset(x + 16f, y), 1.5f)
+                }
+            }
+            drawLine(outline, Offset(229f, 238f), Offset(241f, 250f), 1.5f)
+            drawLine(outline, Offset(254f, 238f), Offset(242f, 250f), 1.5f)
+            drawLine(outline, Offset(229f, 238f), Offset(254f, 238f), 1.5f)
+        }
+        ColoringTheme.BUGS -> {
+            repeat(3) { index ->
+                val x = 296f + index * 11f
+                drawLine(outline, Offset(312f, 151f), Offset(x, 137f), 1.5f)
+                drawLine(outline, Offset(312f, 151f), Offset(x, 166f), 1.5f)
+            }
+            drawLine(outline, Offset(198f, 104f), Offset(246f, 104f), 1.5f)
+            drawLine(outline, Offset(198f, 112f), Offset(246f, 112f), 1.5f)
+            drawLine(outline, Offset(198f, 120f), Offset(246f, 120f), 1.5f)
+            repeat(3) { index ->
+                drawCircle(outline, 3f, Offset(221f + index * 13f, 234f + index % 2 * 12f))
+            }
+        }
     }
 }
 
