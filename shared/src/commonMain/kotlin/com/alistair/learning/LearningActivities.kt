@@ -45,6 +45,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -1465,7 +1467,11 @@ private fun coloringRegionsFor(theme: ColoringTheme): List<ColoringRegion> = whe
         ColoringRegion("sun", "Sun", 53f, 46f, 32f),
         ColoringRegion("flower", "Flower", 104f, 193f, 48f),
         ColoringRegion("bee", "Bee", 221f, 111f, 38f),
-        ColoringRegion("butterfly", "Butterfly", 311f, 153f, 43f),
+        ColoringRegion("butterflyUpperLeft", "Butterfly upper-left wing", 294f, 139f, 15f),
+        ColoringRegion("butterflyLowerLeft", "Butterfly lower-left wing", 297f, 169f, 15f),
+        ColoringRegion("butterflyUpperRight", "Butterfly upper-right wing", 331f, 139f, 15f),
+        ColoringRegion("butterflyLowerRight", "Butterfly lower-right wing", 328f, 169f, 15f),
+        ColoringRegion("butterflyBody", "Butterfly body", 311f, 154f, 9f),
         ColoringRegion("ladybug", "Ladybug", 236f, 239f, 43f),
         ColoringRegion("leaves", "Leaves", 71f, 259f, 44f),
         ColoringRegion("cloud", "Cloud", 324f, 55f, 45f),
@@ -1500,17 +1506,10 @@ private fun ColoringActivity(
     onBack: () -> Unit,
     onSoundEffect: (SoundEffect) -> Unit
 ) {
-    val palette = listOf(
-        Color(0xFFE76F51),
-        Color(0xFFF4A261),
-        Color(0xFFE9C46A),
-        Color(0xFF2A9D8F),
-        Color(0xFF48CAE4),
-        Color(0xFF4D96FF),
-        Color(0xFF9B5DE5),
-        Color(0xFFF15BB5)
-    )
-    var selectedColor by remember { mutableStateOf(palette.first()) }
+    var selectedHue by remember { mutableStateOf(12f) }
+    var selectedSaturation by remember { mutableStateOf(0.7f) }
+    var selectedBrightness by remember { mutableStateOf(0.9f) }
+    val selectedColor = Color.hsv(selectedHue, selectedSaturation, selectedBrightness)
     var selectedScene by remember { mutableStateOf(coloringScenes.first()) }
     var sceneFills by remember { mutableStateOf<Map<Int, Map<String, Color>>>(emptyMap()) }
     val fills = sceneFills[selectedScene.id].orEmpty()
@@ -1601,26 +1600,63 @@ private fun ColoringActivity(
         }
         Text(
             if (sceneComplete) "Beautiful work! You finished this picture. 🎉"
-            else "Selected color: ${palette.indexOf(selectedColor) + 1} • Tap an outlined part to fill it."
+            else "Tap an outlined part to fill it with your selected color."
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            palette.forEachIndexed { index, color ->
-                Button(
-                    onClick = {
-                        onSoundEffect(SoundEffect.TAP)
-                        selectedColor = color
-                    },
-                    modifier = Modifier.weight(1f).height(46.dp),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = color)
-                ) {
-                    if (selectedColor == color) Text("✓", color = Color.White)
-                }
-            }
+            Box(
+                Modifier
+                    .size(32.dp)
+                    .background(selectedColor, CircleShape)
+                    .border(1.dp, Color.DarkGray, CircleShape)
+            )
+            Text("Custom color", fontWeight = FontWeight.Bold)
         }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(22.dp)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color.Red,
+                            Color.Yellow,
+                            Color.Green,
+                            Color.Cyan,
+                            Color.Blue,
+                            Color.Magenta,
+                            Color.Red
+                        )
+                    ),
+                    RoundedCornerShape(12.dp)
+                )
+                .pointerInput(Unit) {
+                    detectTapGestures { tap ->
+                        selectedHue = (tap.x / size.width * 360f).coerceIn(0f, 360f)
+                    }
+                }
+        )
+        Text("Hue")
+        Slider(
+            value = selectedHue,
+            onValueChange = { selectedHue = it },
+            valueRange = 0f..360f
+        )
+        Text("Saturation")
+        Slider(
+            value = selectedSaturation,
+            onValueChange = { selectedSaturation = it },
+            valueRange = 0f..1f
+        )
+        Text("Brightness")
+        Slider(
+            value = selectedBrightness,
+            onValueChange = { selectedBrightness = it },
+            valueRange = 0f..1f
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = {
@@ -2278,11 +2314,47 @@ private fun DrawScope.drawColoringScene(
                 drawLine(outline, Offset(235f, 95f), Offset(241f, 87f), 2f)
                 drawLine(outline, Offset(235f, 95f), Offset(230f, 86f), 2f)
 
-                drawOval(color("butterfly"), Offset(291f, 135f), androidx.compose.ui.geometry.Size(23f, 32f))
-                drawOval(outline, Offset(291f, 135f), androidx.compose.ui.geometry.Size(23f, 32f), style = Stroke(2.5f))
-                drawOval(color("butterfly"), Offset(313f, 135f), androidx.compose.ui.geometry.Size(23f, 32f))
-                drawOval(outline, Offset(313f, 135f), androidx.compose.ui.geometry.Size(23f, 32f), style = Stroke(2.5f))
-                drawLine(outline, Offset(312f, 145f), Offset(312f, 174f), 4f)
+                val upperLeftWing = Path().apply {
+                    moveTo(309f, 147f)
+                    cubicTo(294f, 116f, 270f, 123f, 279f, 148f)
+                    cubicTo(284f, 162f, 298f, 159f, 311f, 154f)
+                    close()
+                }
+                val lowerLeftWing = Path().apply {
+                    moveTo(310f, 153f)
+                    cubicTo(292f, 151f, 280f, 164f, 288f, 178f)
+                    cubicTo(296f, 190f, 306f, 177f, 314f, 159f)
+                    close()
+                }
+                val upperRightWing = Path().apply {
+                    moveTo(314f, 147f)
+                    cubicTo(329f, 116f, 353f, 123f, 344f, 148f)
+                    cubicTo(339f, 162f, 325f, 159f, 312f, 154f)
+                    close()
+                }
+                val lowerRightWing = Path().apply {
+                    moveTo(313f, 153f)
+                    cubicTo(331f, 151f, 343f, 164f, 335f, 178f)
+                    cubicTo(327f, 190f, 317f, 177f, 309f, 159f)
+                    close()
+                }
+                outlined(upperLeftWing, color("butterflyUpperLeft"))
+                outlined(lowerLeftWing, color("butterflyLowerLeft"))
+                outlined(upperRightWing, color("butterflyUpperRight"))
+                outlined(lowerRightWing, color("butterflyLowerRight"))
+                val butterflyBody = Path().apply {
+                    moveTo(311f, 142f)
+                    cubicTo(305f, 149f, 306f, 166f, 312f, 176f)
+                    cubicTo(318f, 166f, 319f, 149f, 313f, 142f)
+                    close()
+                }
+                outlined(butterflyBody, color("butterflyBody"))
+                drawLine(outline, Offset(310f, 145f), Offset(302f, 132f), 2f, StrokeCap.Round)
+                drawLine(outline, Offset(314f, 145f), Offset(322f, 132f), 2f, StrokeCap.Round)
+                listOf(
+                    Offset(293f, 143f), Offset(299f, 151f), Offset(294f, 169f),
+                    Offset(331f, 143f), Offset(325f, 151f), Offset(330f, 169f)
+                ).forEach { drawCircle(outline, 2.5f, it) }
                 drawOval(color("ladybug"), Offset(210f, 220f), androidx.compose.ui.geometry.Size(53f, 37f))
                 drawOval(outline, Offset(210f, 220f), androidx.compose.ui.geometry.Size(53f, 37f), style = Stroke(2.5f))
                 drawLine(outline, Offset(236f, 222f), Offset(236f, 255f), 2f)
@@ -2420,10 +2492,11 @@ private fun DrawScope.drawSceneDetails(
             drawLine(outline, Offset(229f, 238f), Offset(254f, 238f), 1.5f)
         }
         ColoringTheme.BUGS -> {
-            repeat(3) { index ->
-                val x = 296f + index * 11f
-                drawLine(outline, Offset(312f, 151f), Offset(x, 137f), 1.5f)
-                drawLine(outline, Offset(312f, 151f), Offset(x, 166f), 1.5f)
+            listOf(
+                Offset(282f, 139f), Offset(288f, 174f),
+                Offset(342f, 139f), Offset(336f, 174f)
+            ).forEach { endpoint ->
+                drawLine(outline, Offset(312f, 153f), endpoint, 1.5f)
             }
             drawLine(outline, Offset(198f, 104f), Offset(246f, 104f), 1.5f)
             drawLine(outline, Offset(198f, 112f), Offset(246f, 112f), 1.5f)

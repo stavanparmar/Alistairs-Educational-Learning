@@ -23,7 +23,7 @@ Offline-first learning for children on Android and iOS. Kotlin Multiplatform sha
 - Each game screen now opens with an original, theme-matched illustrated scene; the free-draw activity uses an edge-to-edge canvas with floating color and clear controls.
 - Memory cards, maze walls and explorer, and the driving game’s car and road cones use original vector artwork rather than emoji-only game pieces.
 - The profile name field gives a short, muted-by-settings typing tone and an animated, personalized greeting as the child enters their name.
-- Coloring Studio offers 100 original, black-outline vector pages across dinosaur, underwater, safari, garden, forest, farm, space, fantasy, arctic, and insect themes. Tap a thumbnail to open a large page, color separate regions, preserve each page's fills, and advance after finishing.
+- Coloring Studio offers 100 themed choices across dinosaur, underwater, safari, garden, forest, farm, space, fantasy, arctic, and insect themes. Use the hue, saturation, and brightness controls to choose colors, tap outlined regions to fill them, preserve each page's fills, and advance after finishing.
 - New stages are generated locally from curated learning material and validated before being shown.
 - The app must remain usable when an AI model is absent or cannot load.
 - Original visual design, illustrations, activities, and question wording should be created for this project.
